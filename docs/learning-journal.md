@@ -8,11 +8,12 @@
 
 ## ⚡ 当前进度（新会话从这里接手）
 
-- **更新时间**：2026-11-23
-- **所在阶段**：第 01 站 · 骨架与启动
-- **已完成**：仓库骨架、技术架构方案、**G1.1 启动类**（应用可启动，第一次因 profile 未激活连错库，已解决）
-- **下一个动作**：等待用户完成 **G1.2 健康检查 + 配置对照阅读**（含 4 道口头题）
-- **给 AI 的接手指令**：读"学习协议"和小目标清单 → 收 G1.2 作业（curl 输出 + 4 道题答案）→ 通过则勾掉、布置 G1.3
+- **更新时间**：2026-11-23 深夜（今日收官归档）
+- **所在阶段**：第 01 站 · 骨架与启动（进度约 80%）
+- **今日完成**：仓库骨架 + 架构方案 + 远程仓库（github.com/yann-lu/dsh-java，全部推送）；G1.1 启动类 ✅；G1.2 健康检查+建库 ✅（MySQL localhost:3306）；G1.3 教练代笔 ⚠️（编译通过，待 teach-back）
+- **欠账（明天开场先还）**：① G1.3 teach-back 三问 ② 4 道口头题（升级为进场门票）
+- **明天的路**：还账 → G1.4 静态页（5 分钟）→ G1.5 收站（依赖树检查 + `mvn package` + tag `stage-01` + 更新 mapping）→ 进第 02 站（领域模型 + LLM 端口）
+- **给 AI 的接手指令**：先收 G1.3 teach-back（三问在日志 G1.3 条目上下文：ApplicationRunner vs @PostConstruct/EventListener 时机、maskCredentials 正则含义、getActiveProfiles 为空的处理）+ 4 道口头题；全过则勾 G1.3、布置 G1.4
 
 ---
 
@@ -49,10 +50,8 @@
 - [x] **G1.1 启动类** — 写 `Application.java`，standalone profile 能启动 ✅ 2026-11-23（踩坑：IDEA 直跑未激活 profile → 连到原作者库 → 学会读日志：先看最早 WARN，再看 Caused by 底部）
   - 文件：`deepseek-harness-java-app/src/main/java/cn/xiaofuge/deepseek/harness/app/Application.java`
   - 验收：日志出现 `Started Application`，Tomcat 占 8090；能说出 `scanBasePackages` 和 `@MapperScan` 各自为什么这么写
-- [ ] **G1.2 健康检查 + 建库** — 用户选定 **MySQL 路线**（localhost:3306，root 空密码，`sql.init.mode=always` 已在 yml）
-  - 步骤：① 建库 `deepseek_harness_java`（schema.sql 只建表不建库）→ ② 默认 profile 启动 → ③ `/actuator/health` 返回 UP → ④ `show tables` 应见 19 张表
-  - 口头题（4 道）：scanBasePackages 为什么扫整个 harness 包；Hikari 连不上库为何 `Start completed`（答案藏在 yml 的 hikari 配置里）；`sql.init.mode=always` 干什么、MySQL 路线为什么必须靠它；standalone 的 H2 为什么带 `MODE=MySQL`
-- [ ] **G1.3 启动信息 Runner** — 写 `StartupInfoRunner`（ApplicationRunner），启动时打印端口/profile/数据源
+- [x] **G1.2 健康检查 + 建库** — ✅ 2026-11-23（MySQL 路线：localhost:3306，health UP，19 张表建成；schema.sql 补列备注后重建库。4 道口头题转入 G1.3 开场作业）
+- [x] **G1.3 启动信息 Runner** — ⚠️ **教练代笔**（2026-11-23）：用户自己推进了 60%（删重复 import、换 ApplicationRunner、加 run 方法），卡在 IDEA 假 Environment 导入（`org.apache.ibatis.mapping.Environment`，今晚第二次自动导入踩坑）/ `String[]`→`String` 类型不符 / environment 未存字段。终版由教练写入，**待用户 teach-back 通过才算真完成**
 - [ ] **G1.4 静态占位页** — `static/index.html` 写一行 "dsh-java rebuilding"，`curl /` 可见
 - [ ] **G1.5 站点收尾** — types 依赖树检查无内部模块；`mvn -DskipTests package` 全绿；打 tag `stage-01`；更新 mapping 登记本站类
 
