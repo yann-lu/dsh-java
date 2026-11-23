@@ -1,0 +1,52 @@
+server:
+  port: 8090
+
+logging:
+  level:
+    cn.xiaofuge.deepseek.harness: info
+
+spring:
+  application:
+    name: deepseek-harness-java
+  datasource:
+    url: jdbc:mysql://localhost:3306/deepseek_harness_java?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      initialization-fail-timeout: 0
+      connection-timeout: 3000
+      validation-timeout: 2000
+      minimum-idle: 1
+      maximum-pool-size: 10
+      keepalive-time: 30000
+      max-lifetime: 600000
+      leak-detection-threshold: 30000
+  sql:
+    init:
+      mode: always
+      encoding: UTF-8
+  config:
+    import:
+      - optional:classpath:harness.yml
+      - optional:file:./harness.yml
+      - optional:classpath:harness-extensions.yml
+      - optional:file:./harness-extensions.yml
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    default-fetch-size: 100
+    default-statement-timeout: 30
+
+# 运维健康检查：仅暴露 health/info，避免泄漏运行时细节
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+  health:
+    db:
+      enabled: true
