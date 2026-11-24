@@ -98,9 +98,35 @@ javadoc 模板占位句（"处理push/表示BlockAssembler"）不如不写——
 
 ## G2.4 · LLM 适配器（进行中）
 
+## G2.2 · domain.llm 端口与流式值对象 ✅ 2026-11-24
+
 ### 一句话总纲
 
 8 个类 = 三个问题：**向模型要什么**（GenerateOptions）、**模型怎么一点点回**（StreamChunk 全家）、**回完之后的三种元信息**（FinishReason / TokenUsage / LlmFailure）。另外两个接口回答"找谁要"：ILlmRuntimePort 是总闸，LlmAdapter 是各品牌插头。
+
+### 8 个类逐个说
+
+| 类 | 形状 | 干什么 | 为什么需要它 |
+| --- | --- | --- | --- |
+| `GenerateOptions` | record | 一次生成的全部入参 | **连 provider/baseUrl/apiKey 都打进去** → 切换模型渠道=换参数，不是改代码重启（模型热切换的原理） |
+| `StreamChunk` | sealed + 8 record | 流式分片 | LLM 的回答是 token 溪流，不是一整块 |
+| `FinishReason` | sealed | 为什么停了 | `Stop`=说完；`MaxTokens`=被截断（第 04 站续写 4 次的依据）；`ToolCalls`=模型请求调工具；`Error`=失败。ReactLoop 的路标 |
+| `TokenUsage` | record | 输入/输出 token 数 | 上下文压缩（保留 1/4）、压力阈值 100k 的计量单位 |
+| `LlmFailure` | record | 归一化的失败 | 各家 API 错误格式五花八门 → 统一翻译，上层不认识任何一家的协议 |
+| `ILlmRuntimePort` | interface | 领域唯一模型插座 | domain 只 import 它，永不 import HttpClient——六边形的"里侧" |
+| `LlmAdapter` | interface | 单厂商适配契约 | DeepSeek/OpenAI/Anthropic 各一个实现——六边形的"外侧插头" |
+| `ResolvedRetryPolicy` | sealed | 重试策略解析结果 | `retryPolicy()` 的返回值：重试几次/间隔/对哪些错误生效 |
+
+### StreamChunk 的 8 种水滴
+
+| 变体 | 含义 |
+| --- | --- |
+| `BlockStart` / `BlockEnd` | 一段内容的左右括号（带 index 配对） |
+| `TextDelta` | 正文增量 |
+| `ReasoningDelta` | 思考过程增量（R1 类模型） |
+| `ToolCallDelta` | **工具调用的参数 JSON 也是流式逐片吐的**——最反直觉的一块，BlockAssembler 负责拼完整 |
+| `Usage` / `Finish` | 元信息帧（花多少 / 为什么停） |
+| `Retry` | 上游要求重试的信号（推给前端显示"重试中"） |
 
 ### 一次生成的旅程
 
@@ -110,7 +136,7 @@ Agent 要回答
 → ILlmRuntimePort.stream(options) : Flow.Publisher<StreamChunk> ← 领域唯一插座
 → 端口按 provider 路由到 LlmAdapter 实现                        ← 总闸选插头
 → adapter 发 HTTP SSE，一行 JSON 翻译成一个 StreamChunk 发布      ← 水滴
-→ BlockAssembler（G2.3）把水滴攒回 Message                      ← 下一站
+→ BlockAssembler（G2.3）把水滴攒回 Message                      ← 水桶
 → Finish 帧(为什么停) / Usage 帧(花多少) / 失败归一为 LlmFailure
 ```
 

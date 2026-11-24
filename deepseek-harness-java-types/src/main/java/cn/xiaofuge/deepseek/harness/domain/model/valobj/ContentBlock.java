@@ -9,6 +9,6 @@ package cn.xiaofuge.deepseek.harness.domain.model.valobj;
 * <p>示例：领域对象只暴露业务语言方法，不直接依赖基础设施。</p>
 * @author luyan
 */
-public sealed interface ContentBlock permits TextBlock,ReasoningBlock,ToolCallBlock,ToolResultBlock {
+public sealed interface ContentBlock permits TextBlock,ReasoningBlock,ToolCallBlock,ToolResultBlock,ImageBlock {
 
 }
