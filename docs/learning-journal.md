@@ -3,6 +3,7 @@
 > **这是本项目的存档点（checkpoint）文件。**
 > 用途：对话上下文丢失（新会话/被压缩）时，AI 先读本文件即可无缝接续；用户说"继续"即表示"读日志、接着教"。
 > 维护规则：**每完成一个小目标，AI 负责更新本文件**（勾选状态 + 写下一步）；用户随时可以在"卡点笔记"里补自己的话。
+> 配套惯例：**每站关站后写一份复习笔记** `docs/study-notes/stage-0X.md`（知识点卡片 + 踩坑实录 + 自测题），回顾学习过程看那里。
 
 ---
 
@@ -11,7 +12,7 @@
 - **更新时间**：2026-11-24 下午
 - **所在阶段**：✅ **第 01 站已关站（tag `stage-01`）** → 下一站：第 02 站 · 领域模型与 LLM
 - **站内成果**：Application（手写）、StartupInfoRunner（代笔+teach-back）、占位页、MySQL 建库 19 表、jar 可跑；映射登记在 mapping §9
-- **给 AI 的接手指令**：读 `docs/rebuild-roadmap/02-domain-model-and-llm.md` → 按 types 模块优先的顺序拆 G2.x 小目标 → 从 G2.1 开始布置（提醒：第 07 站要抽查 sql.init / MODE=MySQL）
+- **给 AI 的接手指令**：G2.1 已完成（见下方小目标清单），当前收 G2.2（domain.llm 契约层）→ 通过后依次 G2.3 BlockAssembler → G2.4 适配器 → G2.5 api/case/trigger → G2.6 验收打 tag（提醒：第 07 站要抽查 sql.init / MODE=MySQL）
 
 ---
 
@@ -36,8 +37,9 @@
 
 | 站 | 主题 | 状态 |
 | --- | --- | --- |
-| 01 | skeleton-and-boot | 🔨 进行中 |
-| 02~15 | （见 roadmap） | ⬜ 未开始 |
+| 01 | skeleton-and-boot | ✅ 已关站（tag `stage-01`） |
+| 02 | domain-model-and-llm | 🔨 进行中（G2.1 ✅，G2.2 布置中） |
+| 03~15 | （见 roadmap） | ⬜ 未开始 |
 
 ---
 
@@ -52,6 +54,13 @@
 - [x] **G1.3 启动信息 Runner** — ⚠️ 教练代笔（2026-11-23）+ teach-back 重测 4/5 通过（2026-11-24）。首答 1.5/7 教训：activeProfiles=空数组 ≠ "default" 回退名；Q6/Q7（sql.init、MODE=MySQL）第 07 站抽查
 - [x] **G1.4 静态占位页** — ✅ 2026-11-24（**事件**：先拷原版控制台充数→触发硬性禁令→当场撤回，自己重写 101 字节占位页；学到：Spring Boot 内建静态资源映射、git 暂存区 AD/AM 状态含义）
 - [x] **G1.5 站点收尾** — ✅ 2026-11-24（依赖树检查、`mvn package` 全绿、jar 启动 health UP + 首页正确；**tag `stage-01` 已打，第 01 站关站**）
+
+---
+
+### 第 02 站 · 领域模型与 LLM（终点：POST /api/agent/message 真调一次大模型）
+
+- [x] **G2.1 types 消息模型** — ✅ 2026-11-24（Message/MessageSource/ContentBlock+4 块，7 个类零 Spring；踩坑：javadoc 撒谎、contents→content、MessageSource 是 sealed 非 enum；ImageBlock 与 Tool 契约类按减法推迟，登记 mapping）。笔记：`docs/study-notes/stage-02.md`
+- [ ] **G2.2 domain.llm 端口与流式值对象** — 契约层：`ILlmRuntimePort` / `LlmAdapter` / `GenerateOptions` / `StreamChunk`(8 变体) / `FinishReason` / `TokenUsage` / `LlmFailure`；附赠题：stream 为什么返回 `Flow.Publisher<StreamChunk>` 而非 String
 
 ---
 
