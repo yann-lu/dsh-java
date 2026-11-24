@@ -60,7 +60,9 @@
 ### 第 02 站 · 领域模型与 LLM（终点：POST /api/agent/message 真调一次大模型）
 
 - [x] **G2.1 types 消息模型** — ✅ 2026-11-24（Message/MessageSource/ContentBlock+4 块，7 个类零 Spring；踩坑：javadoc 撒谎、contents→content、MessageSource 是 sealed 非 enum；ImageBlock 与 Tool 契约类按减法推迟，登记 mapping）。笔记：`docs/study-notes/stage-02.md`
-- [x] **G2.2 domain.llm 端口与流式值对象** — ✅ 2026-11-24（8 个契约类含 ResolvedRetryPolicy，零 Spring import；**踩坑**：`-pl` 单模块编译依赖走 ~/.m2，没 install 过必须带 `-am`——首次是教练的验收命令背锅；附赠题 Flow.Publisher 由教练讲解，见 study-notes）
+- [x] **G2.2 domain.llm 端口与流式值对象** — ✅ 2026-11-24（8 个契约类含 ResolvedRetryPolicy，零 Spring import；踩坑：`-pl` 单模块编译依赖走 ~/.m2，没 install 过必须带 `-am`）
+- [x] **G2.3 BlockAssembler + 单测** — ✅ 2026-11-24（7 测试全绿；亮点：空流不抛异常、把"异常与否"编码进 FinishReason 语义让上层分流——事件溯源风格设计决定；ensure() 乱序防御）
+- [ ] **G2.4 LLM 适配器** — `OpenAiCompatibleAdapter`（JDK HttpClient + SSE data: 行解析 + SubmissionPublisher）+ `InMemoryLlmRuntimePort`（路由）+ config 装配；验收=真实 key 调通前先打桩测试
 
 ---
 

@@ -68,7 +68,35 @@
 
 ---
 
-## G2.2 · domain.llm 端口与流式值对象 ✅ 2026-11-24
+## G2.3 · BlockAssembler（水滴→水桶）✅ 2026-11-24
+
+### 职责
+
+无状态拼装器：消费 StreamChunk 溪流，攒出结构化 assistant Message。`push(chunk)` 按 index 累积，`finish()` 后产出 `blocks()/usage()/finish()/message(source)`。
+
+### 内部结构（自己设计的）
+
+- `PartialBlock`（text 累积 + toolCallId/name + 已冻结的成品 block）
+- `LinkedHashMap<index, PartialBlock>` + order 列表保序
+- `ensure(index, type)`：delta 先于 BlockStart 到达也能接（乱序防御）
+- BlockEnd "first close wins"：冻结后忽略迟到分片
+- MaxTokens：丢弃 ToolCallBlock（残缺的调用不可执行）
+
+### 关键设计决定（亮点）
+
+**空流不抛异常**：只有 Usage/Finish 时 blocks() 返回空表、finish() 保留语义（如 ToolCalls）。把"异常与否"编码进 FinishReason 值对象，让上层按"为什么空"分流——事件溯源风格：**可判断的状态优于抛出的异常**。
+
+### 单元测试 7 个
+
+正常文本流 / ToolCall 分片重组 / 空流元数据保留 / 无 Finish 默认 Stop / 乱序 / MaxTokens 丢工具块 /（第 7 个自己加的）
+
+### 教训
+
+javadoc 模板占位句（"处理push/表示BlockAssembler"）不如不写——注释要写"为什么"。
+
+---
+
+## G2.4 · LLM 适配器（进行中）
 
 ### 一句话总纲
 
