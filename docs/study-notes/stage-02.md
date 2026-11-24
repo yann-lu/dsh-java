@@ -68,4 +68,37 @@
 
 ---
 
-## G2.2 · domain.llm 端口与流式值对象（进行中）
+## G2.2 · domain.llm 端口与流式值对象 ✅ 2026-11-24
+
+### 一句话总纲
+
+8 个类 = 三个问题：**向模型要什么**（GenerateOptions）、**模型怎么一点点回**（StreamChunk 全家）、**回完之后的三种元信息**（FinishReason / TokenUsage / LlmFailure）。另外两个接口回答"找谁要"：ILlmRuntimePort 是总闸，LlmAdapter 是各品牌插头。
+
+### 一次生成的旅程
+
+```text
+Agent 要回答
+→ GenerateOptions(provider/model/messages/maxTokens/apiKey…)   ← 要什么（渠道信息也打进去→热切换不重启）
+→ ILlmRuntimePort.stream(options) : Flow.Publisher<StreamChunk> ← 领域唯一插座
+→ 端口按 provider 路由到 LlmAdapter 实现                        ← 总闸选插头
+→ adapter 发 HTTP SSE，一行 JSON 翻译成一个 StreamChunk 发布      ← 水滴
+→ BlockAssembler（G2.3）把水滴攒回 Message                      ← 下一站
+→ Finish 帧(为什么停) / Usage 帧(花多少) / 失败归一为 LlmFailure
+```
+
+### 为什么返回 Flow.Publisher 而不是 String
+
+1. **SSE 直通**：第 03 站要把增量实时推给浏览器——Publisher 是"推"语义，来一片推一片；String 要攒一桶才给
+2. **背压**：Flow.Subscriber 可 `request(n)` 按消费能力拉取，2000 token 的大回答不会灌爆内存
+3. **惰性**：订阅才发起 HTTP 请求
+
+### port 与 adapter 两级的关系
+
+`ILlmRuntimePort` 稳定不变（领域只认识它）；`LlmAdapter` 可插拔（每家协议一个实现）。**新增厂商 = 新增一个 adapter 实现 + registerAdapter 注册，领域零改动**——这就是"新增渠道零新 Bean"的根基。
+
+### 踩坑实录
+
+| 坑 | 教训 |
+| --- | --- |
+| `mvn -pl domain compile` 报"types 包不存在" | `-pl` 单模块模式下依赖从 ~/.m2 解析；没 install 过必须 `-am`（also-make） |
+| 工具调用参数也是流的 | `ToolCallDelta` 存在的原因：模型吐工具参数 JSON 也是一片一片的，G2.3 的 BlockAssembler 要负责把它拼完整 |

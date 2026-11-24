@@ -60,7 +60,7 @@
 ### 第 02 站 · 领域模型与 LLM（终点：POST /api/agent/message 真调一次大模型）
 
 - [x] **G2.1 types 消息模型** — ✅ 2026-11-24（Message/MessageSource/ContentBlock+4 块，7 个类零 Spring；踩坑：javadoc 撒谎、contents→content、MessageSource 是 sealed 非 enum；ImageBlock 与 Tool 契约类按减法推迟，登记 mapping）。笔记：`docs/study-notes/stage-02.md`
-- [ ] **G2.2 domain.llm 端口与流式值对象** — 契约层：`ILlmRuntimePort` / `LlmAdapter` / `GenerateOptions` / `StreamChunk`(8 变体) / `FinishReason` / `TokenUsage` / `LlmFailure`；附赠题：stream 为什么返回 `Flow.Publisher<StreamChunk>` 而非 String
+- [x] **G2.2 domain.llm 端口与流式值对象** — ✅ 2026-11-24（8 个契约类含 ResolvedRetryPolicy，零 Spring import；**踩坑**：`-pl` 单模块编译依赖走 ~/.m2，没 install 过必须带 `-am`——首次是教练的验收命令背锅；附赠题 Flow.Publisher 由教练讲解，见 study-notes）
 
 ---
 
@@ -68,5 +68,6 @@
 
 | 日期 | 小目标 | 卡点/发现/学到什么 |
 | --- | --- | --- |
+| 2026-11-24 | G2.2 | **Maven reactor 教训**：`mvn -pl domain compile` 报"types 包不存在"——`-pl` 单模块模式下依赖从本地仓库 ~/.m2 解析，工程从未 install 过 → 必须带 `-am`（also-make 连带编译依赖模块）或先全量 install。**另有硬核知识**：工具调用的参数 JSON 也是流式逐片吐出的（ToolCallDelta 存在的原因） |
 | 2026-11-24 | G1.4 | **控制台拷贝事件**：把原版 3300 行控制台拷进 static/ 充数 → 触发唯一硬性禁令 → 撤回重写。教训：①静态页是第 14 站的实现体，不是配置 ②git `AD/AM`：commit 提交的是暂存区不是工作区，删文件不清 add（`git restore --staged`）③Spring Boot 内建静态资源映射（classpath:/static → index.html 欢迎页） |
 | 2026-11-23 | G1.1 | 首次启动失败：IDEA 直接跑 Run 按钮没激活 `standalone` profile → 回落 default → default 数据源是原版作者的局域网 MySQL（192.168.1.108:13306）→ Connection refused。**教训：读日志先看最早的 WARN（`No active profile set`），再看 Caused by 链的最底部（`Connection refused`）；启动类代码本身没问题** |
