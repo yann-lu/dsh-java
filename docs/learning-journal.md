@@ -8,12 +8,10 @@
 
 ## ⚡ 当前进度（新会话从这里接手）
 
-- **更新时间**：2026-11-23 深夜（今日收官归档）
-- **所在阶段**：第 01 站 · 骨架与启动（进度约 80%）
-- **今日完成**：仓库骨架 + 架构方案 + 远程仓库（github.com/yann-lu/dsh-java，全部推送）；G1.1 启动类 ✅；G1.2 健康检查+建库 ✅（MySQL localhost:3306）；G1.3 教练代笔 ⚠️（编译通过，待 teach-back）
-- **欠账（明天开场先还）**：① G1.3 teach-back 三问 ② 4 道口头题（升级为进场门票）
-- **明天的路**：还账 → G1.4 静态页（5 分钟）→ G1.5 收站（依赖树检查 + `mvn package` + tag `stage-01` + 更新 mapping）→ 进第 02 站（领域模型 + LLM 端口）
-- **给 AI 的接手指令**：先收 G1.3 teach-back（三问在日志 G1.3 条目上下文：ApplicationRunner vs @PostConstruct/EventListener 时机、maskCredentials 正则含义、getActiveProfiles 为空的处理）+ 4 道口头题；全过则勾 G1.3、布置 G1.4
+- **更新时间**：2026-11-24 下午
+- **所在阶段**：✅ **第 01 站已关站（tag `stage-01`）** → 下一站：第 02 站 · 领域模型与 LLM
+- **站内成果**：Application（手写）、StartupInfoRunner（代笔+teach-back）、占位页、MySQL 建库 19 表、jar 可跑；映射登记在 mapping §9
+- **给 AI 的接手指令**：读 `docs/rebuild-roadmap/02-domain-model-and-llm.md` → 按 types 模块优先的顺序拆 G2.x 小目标 → 从 G2.1 开始布置（提醒：第 07 站要抽查 sql.init / MODE=MySQL）
 
 ---
 
@@ -51,9 +49,9 @@
   - 文件：`deepseek-harness-java-app/src/main/java/cn/xiaofuge/deepseek/harness/app/Application.java`
   - 验收：日志出现 `Started Application`，Tomcat 占 8090；能说出 `scanBasePackages` 和 `@MapperScan` 各自为什么这么写
 - [x] **G1.2 健康检查 + 建库** — ✅ 2026-11-23（MySQL 路线：localhost:3306，health UP，19 张表建成；schema.sql 补列备注后重建库。4 道口头题转入 G1.3 开场作业）
-- [x] **G1.3 启动信息 Runner** — ⚠️ **教练代笔**（2026-11-23）：用户自己推进了 60%（删重复 import、换 ApplicationRunner、加 run 方法），卡在 IDEA 假 Environment 导入（`org.apache.ibatis.mapping.Environment`，今晚第二次自动导入踩坑）/ `String[]`→`String` 类型不符 / environment 未存字段。终版由教练写入，**待用户 teach-back 通过才算真完成**
-- [ ] **G1.4 静态占位页** — `static/index.html` 写一行 "dsh-java rebuilding"，`curl /` 可见
-- [ ] **G1.5 站点收尾** — types 依赖树检查无内部模块；`mvn -DskipTests package` 全绿；打 tag `stage-01`；更新 mapping 登记本站类
+- [x] **G1.3 启动信息 Runner** — ⚠️ 教练代笔（2026-11-23）+ teach-back 重测 4/5 通过（2026-11-24）。首答 1.5/7 教训：activeProfiles=空数组 ≠ "default" 回退名；Q6/Q7（sql.init、MODE=MySQL）第 07 站抽查
+- [x] **G1.4 静态占位页** — ✅ 2026-11-24（**事件**：先拷原版控制台充数→触发硬性禁令→当场撤回，自己重写 101 字节占位页；学到：Spring Boot 内建静态资源映射、git 暂存区 AD/AM 状态含义）
+- [x] **G1.5 站点收尾** — ✅ 2026-11-24（依赖树检查、`mvn package` 全绿、jar 启动 health UP + 首页正确；**tag `stage-01` 已打，第 01 站关站**）
 
 ---
 
@@ -61,4 +59,5 @@
 
 | 日期 | 小目标 | 卡点/发现/学到什么 |
 | --- | --- | --- |
+| 2026-11-24 | G1.4 | **控制台拷贝事件**：把原版 3300 行控制台拷进 static/ 充数 → 触发唯一硬性禁令 → 撤回重写。教训：①静态页是第 14 站的实现体，不是配置 ②git `AD/AM`：commit 提交的是暂存区不是工作区，删文件不清 add（`git restore --staged`）③Spring Boot 内建静态资源映射（classpath:/static → index.html 欢迎页） |
 | 2026-11-23 | G1.1 | 首次启动失败：IDEA 直接跑 Run 按钮没激活 `standalone` profile → 回落 default → default 数据源是原版作者的局域网 MySQL（192.168.1.108:13306）→ Connection refused。**教训：读日志先看最早的 WARN（`No active profile set`），再看 Caused by 链的最底部（`Connection refused`）；启动类代码本身没问题** |

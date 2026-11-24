@@ -82,7 +82,9 @@
 
 | 本仓库 | 原项目 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| （待第 01 站起逐个登记） | | | |
+| `app/.../app/Application.java` | 同名 | same | 从 0 手写（G1.1）：全包扫描 + @MapperScan |
+| `app/.../app/StartupInfoRunner.java` | 同名 | simplified | ApplicationRunner 打印端口/profile/脱敏数据源（G1.3 教练代笔，teach-back 通过） |
+| `app/.../resources/static/index.html` | 同名 | simplified | 占位页 "dsh-java rebuilding"（G1.4）；原版为完整控制台，第 14 站自己重写 |
 
 ---
 
