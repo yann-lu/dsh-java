@@ -64,13 +64,15 @@
 
 | 本仓库 | 原项目 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| （待第 05 站起逐个登记） | | | |
+| `cases/agent/AgentUseCase` | 同名 | simplified | 第 02 站薄用例：阻塞收流 + `BlockAssembler` 组装助手消息后直接返回 DTO；原版委托 `AgentMessageFactory` 策略树 |
+| `cases/agent/IAgentUseCase` | `IAgentUseCase` | temporary | 接口名多了 `r`，属未登记偏差；第 05 站接策略树时决定改名对齐还是保留 |
+| （其余待第 05 站起逐个登记） | | | |
 
 ## 7. infrastructure 模块
 
 | 本仓库 | 原项目 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| （待第 07 站起逐个登记） | | | |
+| `infrastructure/config/HarnessApplicationConfig` | 同名 | simplified | 第 02 站：只装配 `deepSeekAdapter` + `llmRuntimePort`（把容器内所有 `LlmAdapter` Bean 按 `providerId` 注册进内存路由）；原版还注册 openai/ollama 适配器、`LlmAdapterFactory`、`ChannelPresets` 渠道路由与 fallbackFactory，留到 09 站 |
 
 ## 8. trigger 模块
 

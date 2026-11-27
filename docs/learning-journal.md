@@ -9,10 +9,12 @@
 
 ## ⚡ 当前进度（新会话从这里接手）
 
-- **更新时间**：2026-11-24 下午
-- **所在阶段**：✅ **第 01 站已关站（tag `stage-01`）** → 下一站：第 02 站 · 领域模型与 LLM
-- **站内成果**：Application（手写）、StartupInfoRunner（代笔+teach-back）、占位页、MySQL 建库 19 表、jar 可跑；映射登记在 mapping §9
-- **给 AI 的接手指令**：G2.1 已完成（见下方小目标清单），当前收 G2.2（domain.llm 契约层）→ 通过后依次 G2.3 BlockAssembler → G2.4 适配器 → G2.5 api/case/trigger → G2.6 验收打 tag（提醒：第 07 站要抽查 sql.init / MODE=MySQL）
+- **更新时间**：2026-11-27
+- **所在阶段**：第 02 站 · G2.1~G2.5 全部完成，**G2.6 收站中**
+- **里程碑**：2026-11-27 端到端首次打通——`POST /api/agent/message` 真调 DeepSeek 返回 assistant 文本
+- **完整笔记**：`docs/study-notes/stage-02.md`（已扩写为完整版：全站地图/收流模板/三层薄法/踩坑总表 10 条/自测 9 题）
+- **G2.6 待办**：①无 key 可读错误（当前 info:"provider" 不可读）②补 G2.4 SSE 桩测试 ③types 零 Spring 复查 ④mapping 登记 + tag `stage-02` + push
+- **给 AI 的接手指令**：收 G2.6 三项交付 → 全过则打 tag 关站 → 开第 03 站（SSE 与会话事件，读 `docs/rebuild-roadmap/03-sse-and-session-events.md`）
 
 ---
 
@@ -62,7 +64,9 @@
 - [x] **G2.1 types 消息模型** — ✅ 2026-11-24（Message/MessageSource/ContentBlock+4 块，7 个类零 Spring；踩坑：javadoc 撒谎、contents→content、MessageSource 是 sealed 非 enum；ImageBlock 与 Tool 契约类按减法推迟，登记 mapping）。笔记：`docs/study-notes/stage-02.md`
 - [x] **G2.2 domain.llm 端口与流式值对象** — ✅ 2026-11-24（8 个契约类含 ResolvedRetryPolicy，零 Spring import；踩坑：`-pl` 单模块编译依赖走 ~/.m2，没 install 过必须带 `-am`）
 - [x] **G2.3 BlockAssembler + 单测** — ✅ 2026-11-24（7 测试全绿；亮点：空流不抛异常、把"异常与否"编码进 FinishReason 语义让上层分流——事件溯源风格设计决定；ensure() 乱序防御）
-- [ ] **G2.4 LLM 适配器** — `OpenAiCompatibleAdapter`（JDK HttpClient + SSE data: 行解析 + SubmissionPublisher）+ `InMemoryLlmRuntimePort`（路由）+ config 装配；验收=真实 key 调通前先打桩测试
+- [x] **G2.4 LLM 适配器** — ⚠️ 有条件通过（2026-11-24）：DeepSeekAdapter 920 行对齐原版规模（+OpenAi/Anthropic/InMemoryPort，2226 行提交 `4b18302`），超出 roadmap 最小实现范围；**欠账：SSE 同包桩测试未交，G2.6 必还**。SubmissionPublisher=生产者消费者桥概念经补课建立
+- [x] **G2.5 api/case/trigger 三层薄壳** — ✅ 2026-11-27（**端到端打通**：POST /api/agent/message 真调 DeepSeek 返回 assistant 文本；踩坑：订阅后忘 await 返回空对象→"subscribe 返回≠数据到了"；IAgentUserCase 拼写连错三次；AgentApi 最终依赖契约接口+异常分流；config 用 List<LlmAdapter> 自动收集。遗留：无 key 时 info:"provider" 不可读 → G2.6 修）
+- [ ] **G2.6 站点验收** — ①修无 key 可读错误（端口/适配器前置校验，别等 401）②补 G2.4 SSE 桩测试 ③types 零 Spring 复查 ④mapping 登记 + tag `stage-02` + push
 
 ---
 
@@ -70,6 +74,8 @@
 
 | 日期 | 小目标 | 卡点/发现/学到什么 |
 | --- | --- | --- |
+| 2026-11-27 | G2.5 | **端到端首次打通**：assistant 真实回复落地。核心坑：①订阅异步性——subscribe 返回≠数据到了，忘 await 返回永远空对象 ②接口隔离断在最后一米：AgentApi 注入实现类而非 IAgentUseCase ③拼写 User/Use 三连 ④异常消息碎渣（info:"provider"）≠ 可读错误。**事件：learning-journal.md 曾被误删，从 236b3fe 恢复——日志是存档点，commit 前别动它** |
+| 2026-11-26 | G2.4 | **"写完了"≠"验证过了"**：920 行适配器零测试。SubmissionPublisher 是协议无关的生产者-消费者桥（adapter 生产→桥→订阅者），口试三道 1错2半3不知道后补课 |
 | 2026-11-24 | G2.2 | **Maven reactor 教训**：`mvn -pl domain compile` 报"types 包不存在"——`-pl` 单模块模式下依赖从本地仓库 ~/.m2 解析，工程从未 install 过 → 必须带 `-am`（also-make 连带编译依赖模块）或先全量 install。**另有硬核知识**：工具调用的参数 JSON 也是流式逐片吐出的（ToolCallDelta 存在的原因） |
 | 2026-11-24 | G1.4 | **控制台拷贝事件**：把原版 3300 行控制台拷进 static/ 充数 → 触发唯一硬性禁令 → 撤回重写。教训：①静态页是第 14 站的实现体，不是配置 ②git `AD/AM`：commit 提交的是暂存区不是工作区，删文件不清 add（`git restore --staged`）③Spring Boot 内建静态资源映射（classpath:/static → index.html 欢迎页） |
 | 2026-11-23 | G1.1 | 首次启动失败：IDEA 直接跑 Run 按钮没激活 `standalone` profile → 回落 default → default 数据源是原版作者的局域网 MySQL（192.168.1.108:13306）→ Connection refused。**教训：读日志先看最早的 WARN（`No active profile set`），再看 Caused by 链的最底部（`Connection refused`）；启动类代码本身没问题** |
