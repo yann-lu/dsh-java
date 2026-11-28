@@ -64,7 +64,7 @@
 
 | 本仓库 | 原项目 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| `cases/agent/AgentUseCase` | 同名 | simplified | 第 02 站薄用例：阻塞收流 + `BlockAssembler` 组装助手消息后直接返回 DTO；原版委托 `AgentMessageFactory` 策略树 |
+| `cases/agent/AgentUseCase` | 同名 | simplified | 第 02 站薄用例：阻塞收流 + `BlockAssembler` 组装助手消息后直接返回 DTO；收流后按 `Finish(Error)` 把 `LlmFailure` 还原到 `DTO.error`（否则空块会被误判成“模型未返回任何内容”）；原版委托 `AgentMessageFactory` 策略树 |
 | `cases/agent/IAgentUseCase` | `IAgentUseCase` | temporary | 接口名多了 `r`，属未登记偏差；第 05 站接策略树时决定改名对齐还是保留 |
 | （其余待第 05 站起逐个登记） | | | |
 
@@ -109,4 +109,4 @@
 
 | 站 | 类 | 我的写法 | 原版写法 | 学到什么 |
 | --- | --- | --- | --- | --- |
-| | | | | |
+| 02 | `infrastructure/.../InMemoryLlmRuntimePort` | 路由失败用 `singleChunkStream`，调用方订阅时才投递 `Finish(Error)` | 先 `SubmissionPublisher.submit` + `close`，再把 Publisher 返回 | `SubmissionPublisher` 不为订阅前提交的元素保留缓冲，同步产生的终态 chunk 会被静默丢掉；异常编码进值对象后还必须保证投递时机 |

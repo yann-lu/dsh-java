@@ -29,13 +29,10 @@ public record GenerateOptions(
         String protocol) {
         
         public GenerateOptions {
-                Objects.requireNonNull(provider, "provider");
-                Objects.requireNonNull(model, "model");
                 messages = List.copyOf(messages);
                 tools = tools == null ? null : List.copyOf(tools);
                 stop = stop == null ? null : List.copyOf(stop);
         }
-
         /**
             * 兼容旧调用方的构造器：协议按 openai 兼容处理。
             */

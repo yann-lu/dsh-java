@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Flow;
 import java.util.concurrent.SubmissionPublisher;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -172,15 +173,13 @@ public class InMemoryLlmRuntimePort implements ILlmRuntimePort{
             log.error("模型路由失败：provider='{}' 未注册适配器，可用 providers={}。"
                       + "请检查 Web 控制台模型设置中的 providerCode。",
                       options.provider(), adapters.keySet());
-            SubmissionPublisher<StreamChunk> publisher = new SubmissionPublisher<>();
-            publisher.submit(new StreamChunk.Finish(new FinishReason.Error(new LlmFailure(
+            StreamChunk.Finish failureFinish = new StreamChunk.Finish(new FinishReason.Error(new LlmFailure(
                 "No adapter registered for provider '" + options.provider()
                 + "'. Available providers: " + adapters.keySet()
                 + ". Check providerCode in model settings.",
                 LlmErrorCodes.UNKNOWN
-            ))));
-            publisher.close();
-            return publisher;
+            )));
+            return singleChunkStream(failureFinish);
         }
 
         ResolvedRetryPolicy policy = adapter.retryPolicy(options.provider());
@@ -220,6 +219,41 @@ public class InMemoryLlmRuntimePort implements ILlmRuntimePort{
 
         return wrapper;
     }
+
+    /**
+     * 构造只投递一个终态 chunk 的流。
+     * <p>SubmissionPublisher 不会为“订阅之前”提交的元素保留缓冲，像路由失败这种
+     * 同步产生的终态必须先返回 Publisher、等调用方订阅时再投递；否则调用方只能
+     * 收到 onComplete，错误信息会被丢掉。</p>
+     *
+     * @param terminal 终态 chunk（如 Finish(Error)）
+     * @return 订阅时投递终态并完成的 Publisher
+     */
+    private static Flow.Publisher<StreamChunk> singleChunkStream(StreamChunk terminal) {
+        return subscriber -> subscriber.onSubscribe(new Flow.Subscription() {
+
+            private final AtomicBoolean delivered = new AtomicBoolean();
+
+            @Override
+            public void request(long n) {
+                if (!delivered.compareAndSet(false, true)) {
+                    return;
+                }
+                if (n <= 0) {
+                    subscriber.onError(new IllegalArgumentException("non-positive subscription request"));
+                    return;
+                }
+                subscriber.onNext(terminal);
+                subscriber.onComplete();
+            }
+
+            @Override
+            public void cancel() {
+                delivered.set(true);
+            }
+        });
+    }
+
     /**
      * 对流式模型调用执行重试。
      * <p>流程：发起流式请求 → chunk 实时桥接转发给下游 → 仅在未吐出任何内容时发生可重试错误才按退避策略重建流。</p>

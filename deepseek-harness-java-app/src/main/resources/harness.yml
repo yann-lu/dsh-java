@@ -6,6 +6,7 @@ harness:
       max-tokens: 8192
       context-window: 128000
       default-model: ${LLM_DEFAULT_MODEL:${DEEPSEEK_DEFAULT_MODEL:deepseek-v4.1-flash}}
+      default-provider: ${LLM_DEFAULT_MODEL:${DEEPSEEK_DEFAULT_CHANNEL_CODE:deepseek}}
 
   approval:
     required-profiles:

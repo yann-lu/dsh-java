@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import cn.xiaofuge.deepseek.harness.api.dto.AgentMessageRequestDTO;
 import cn.xiaofuge.deepseek.harness.api.dto.AgentMessageResponseDTO;
 import cn.xiaofuge.deepseek.harness.domain.llm.adapter.port.ILlmRuntimePort;
+import cn.xiaofuge.deepseek.harness.domain.llm.model.valobj.FinishReason;
 import cn.xiaofuge.deepseek.harness.domain.llm.model.valobj.GenerateOptions;
 import cn.xiaofuge.deepseek.harness.domain.llm.model.valobj.StreamChunk;
 import cn.xiaofuge.deepseek.harness.domain.llm.service.BlockAssembler;
@@ -31,10 +32,15 @@ public class AgentUseCase implements IAgentUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(AgentUseCase.class);
 
+    // 类里加一个配置字段：
+    @Value("${harness.llm.deepseek.default-provider:deepseek}")
+    private String defaultProvider;
     @Value("${harness.llm.deepseek.base-url}")
     private String baseUrl;
     @Value("${harness.llm.deepseek.api-key}")
     private String apiKey;
+    @Value("${harness.llm.deepseek.default-model:deepseek-v4.1-flash}")
+    private String defaultModel;
 
     @Autowired
     private ILlmRuntimePort llmRuntimePort;
@@ -49,8 +55,8 @@ public class AgentUseCase implements IAgentUseCase {
         Message userMessage = Message.createUser(List.of(new TextBlock(request.message())), new MessageSource.UserResources());
         // 3. 发起流式调用
         String sessionId = UUID.randomUUID().toString();
-        GenerateOptions options = new GenerateOptions(request.channelCode(),
-                                                      "deepseek-v4.1-flash",
+        GenerateOptions options = new GenerateOptions(StringUtils.isNotBlank(request.channelCode()) ? request.channelCode() : defaultProvider,
+                                                      defaultModel,
                                                       "medium",
                                                       List.of(userMessage),
                                                       "user",
@@ -62,7 +68,6 @@ public class AgentUseCase implements IAgentUseCase {
                                                       "",
                                                       baseUrl,
                                                       apiKey);
-
         var assembler = new BlockAssembler();
         var done = new CountDownLatch(1);
         var error = new AtomicReference<Throwable>();
@@ -103,11 +108,19 @@ public class AgentUseCase implements IAgentUseCase {
         List<Map<String, Object>> messages = List.of(toMessageMap(userMessage), toMessageMap(assistantMessage));
 
         String errorMessage = null;
+        FinishReason finishReason = assembler.finish();
         if (error.get() != null) {
             Throwable cause = error.get();
             log.error("Agent={} 调用模型失败", request.agentId(), cause);
             errorMessage = "调用模型失败：" + (cause.getMessage() != null
                     ? cause.getMessage() : cause.getClass().getSimpleName());
+        } else if (finishReason instanceof FinishReason.Error failed) {
+            // 端口把路由失败等异常编码进 Finish(Error)，块内容会是空的，
+            // 必须在这里把 LlmFailure 的人话还原给调用方，否则会被下面的空响应分支吞掉
+            log.error("Agent={} 模型调用失败 code={} status={}：{}",
+                    request.agentId(), failed.failure().code(), failed.failure().status(),
+                    failed.failure().message());
+            errorMessage = "模型调用失败：" + failed.failure().message();
         } else if (assistantMessage.content().isEmpty()) {
             // 模型可能只返回 [DONE]，空响应要给出明确错误
             errorMessage = "模型未返回任何内容";
